@@ -40,7 +40,7 @@
 	<script type="text/javascript" src="countries.js"></script>
 	<script type="text/javascript">
 
-		var map = L.map('map').setView([0, 0], 1);
+		var map = L.map('map').setView([0, 0], 0);
 		map.on('move', onMapMove);
 		var countryIdx;
 		
@@ -80,11 +80,11 @@
 			countryIdx = Math.floor(Math.random() * statesData.features.length);
 	
 			html = '<h4>Find the country</h4>' + statesData.features[countryIdx].properties.name;		
-			html = html + '<input type="button" value="resolve" style="float: right;" onclick="resolve()">';
+			html = html + '<input type="button" value="resolve" onclick="resolve()">';
 	
 			info.update(html);
 		
-			map.setView([0, 0], 1);
+			map.setView([0, 0], 0);
 		}
 		
 		function resolve() {
@@ -93,7 +93,7 @@
 			map.fitBounds(feature.getBounds());
 
 			html = '<h4>Find the country</h4>' + statesData.features[countryIdx].properties.name;		
-			html = html + '<input type="button" value="next" style="float: right;" onclick="nextCountry()">';
+			html = html + '<input type="button" onclick="nextCountry()">';
 	
 			info.update(html);
 		}
@@ -162,6 +162,7 @@
 			onEachFeature: onEachFeature
 		}).addTo(map);
 		
+		map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s world Quiz</a>');
 	</script>
 </body>
 </html>
