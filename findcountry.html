@@ -30,19 +30,6 @@
 			margin: 0 0 5px;
 			color: #777;
 		}
-
-		.legend {
-			text-align: left;
-			line-height: 18px;
-			color: #555;
-		}
-		.legend i {
-			width: 18px;
-			height: 18px;
-			float: left;
-			margin-right: 8px;
-			opacity: 0.7;
-		}
 	</style>
 </head>
 <body>
@@ -54,104 +41,121 @@
 	<script type="text/javascript">
 
 		var map = L.map('map').setView([0, 0], 1);
+		map.on('move', onMapMove);
 		var countryIdx;
-
-		var cloudmade = L.tileLayer('http://{s}.tile.cloudmade.com/{key}/{styleId}/256/{z}/{x}/{y}.png', {
-			attribution: 'Map data &copy; 2011 OpenStreetMap contributors, Imagery &copy; 2011 CloudMade',
-			key: 'BC9A493B41014CAABB98F0471D759707',
-			styleId: 22677
-		}).addTo(map);
+		
 
 		// control that shows state info on hover
 		var info = L.control();
 
 		info.onAdd = function (map) {
 			this._div = L.DomUtil.create('div', 'info');
-			this.update();
+			nextCountry();
 			return this._div;
 		};
 				
-		info.update = function (props) {
-//			this._div.innerHTML = '<h4>US Population Density</h4>' +  (props ?
-//				'<b>' + props.name + '</b><br />' + props.density + ' people / mi<sup>2</sup>'
-//				: 'Hover over a state');
-			
-
-			if(props && props.id != statesData.features[countryIdx].id)
-			{
-				this._div.innerHTML = '<h4>Try again</h4>' + statesData.features[countryIdx].properties.name;
-				return;
-			}
-
-			countryIdx = Math.floor(Math.random() * statesData.features.length);
-			this._div.innerHTML = '<h4>Find the country</h4>' + statesData.features[countryIdx].properties.name;				
+		info.update = function (html) {		
+			this._div.innerHTML = html;
 		};
 
 		info.addTo(map);
+		var highlightedFeature;
 		
-		var country = "CZE";
-
-		// get color depending on population density value
-		function getColor(d) {
-			return d > 1000 ? '#800026' :
-			       d > 500  ? '#BD0026' :
-			       d > 200  ? '#E31A1C' :
-			       d > 100  ? '#FC4E2A' :
-			       d > 50   ? '#FD8D3C' :
-			       d > 20   ? '#FEB24C' :
-			       d > 10   ? '#FED976' :
-			                  '#FFEDA0';
+		function onMapMove() {
 		}
+	
+		function checkResult(id) {
+			if(id == statesData.features[countryIdx].id)
+				resolve();
+			else {
+				var feature = jsonToFeature[id];
+				highlightFeature(feature, '#faa');
+			}
+		}
+		
+		function nextCountry() {
+			if(highlightedFeature) 
+				geojson.resetStyle(highlightedFeature);
+				
+			countryIdx = Math.floor(Math.random() * statesData.features.length);
+	
+			html = '<h4>Find the country</h4>' + statesData.features[countryIdx].properties.name;		
+			html = html + '<input type="button" value="resolve" style="float: right;" onclick="resolve()">';
+	
+			info.update(html);
+		
+			map.setView([0, 0], 1);
+		}
+		
+		function resolve() {
+			var feature = jsonToFeature[statesData.features[countryIdx].id];
+			highlightFeature(feature, '#afa');
+			map.fitBounds(feature.getBounds());
 
+			html = '<h4>Find the country</h4>' + statesData.features[countryIdx].properties.name;		
+			html = html + '<input type="button" value="next" style="float: right;" onclick="nextCountry()">';
+	
+			info.update(html);
+		}
+		
 		function style(feature) {
 			return {
 				weight: 2,
 				opacity: 1,
 				color: 'white',
 				dashArray: '3',
-				fillOpacity: 0.7,
-				fillColor: '#00f',
+				fillOpacity: 1.0,
+				fillColor: '#00f'
 //				fillColor: getColor(feature.properties.density)
 			};
 		}
-
-		function highlightFeature(e) {
-			var layer = e.target;
+		
+		function highlightFeature(layer, c) {
+			if(highlightedFeature)
+				geojson.resetStyle(highlightedFeature);
 
 			layer.setStyle({
 				weight: 5,
 				color: '#666',
 				dashArray: '',
-				fillOpacity: 0.7
+				fillColor: c,
+				fillOpacity: 0.3
 			});
 
-			if (!L.Browser.ie && !L.Browser.opera) {
-				layer.bringToFront();
-			}
+			highlightedFeature = layer;
+
+			layer.bringToFront();
+		}
+
+		function onMouseOver(e) {
+			highlightFeature(e.target, '#afa');
 		}
 
 		var geojson;
 
 		function resetHighlight(e) {
 			geojson.resetStyle(e.target);
-//			info.update();
 		}
 
 		function zoomToFeature(e) {
-			map.fitBounds(e.target.getBounds());
+//			map.fitBounds(e.target.getBounds());
 
 			var layer = e.target;
-			info.update(layer.feature);
-		}
-
-		function onEachFeature(feature, layer) {
-			layer.on({
-				mouseover: highlightFeature,
-				mouseout: resetHighlight,
-				click: zoomToFeature
-			});
+			checkResult(layer.feature.id);
+//			info.update(layer.feature);
 		}
 		
+		var jsonToFeature = {};
+
+		function onEachFeature(feature, layer) {
+			jsonToFeature[feature.id] = layer;
+			layer.bindPopup(feature.properties.name);
+			layer.on({
+//				mouseover: onMouseOver,
+//				mouseout: resetHighlight,
+				click: zoomToFeature
+			});
+		}		
 
 		geojson = L.geoJson(statesData, {
 			style: style,
