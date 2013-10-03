@@ -27,7 +27,7 @@
 			border-radius: 5px;
 		}
 		.info h4 {
-			margin: 0 0 5px;
+			margin: 5px 5px 5px 5px;
 			color: #777;
 		}
 	</style>
@@ -104,7 +104,7 @@
 		function resolve() {
 			var feature = jsonToFeature[statesData.features[countryIdx].id];
 			highlightFeature(feature, '#afa');
-			map.fitBounds(feature.getBounds().pad(.3));
+			map.fitBounds(feature.getBounds().pad(.5));
 
 			resolved = true;
 			updateUI();
@@ -122,7 +122,7 @@
 				nextText = "Weiter";
 			}
 			
-			var html = '<h4>' + headerText + '</h4><div style="text-align: center">' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</div>';		
+			var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';		
 			html = html + '<div style="text-align: right">';
 			
 			if(lang == "de")
@@ -222,7 +222,7 @@
 			updateMapLanguage();
 		}
 		
-		map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s world Quiz</a>');
+		map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s World Quiz</a>');
 	</script>
 </body>
 </html>
