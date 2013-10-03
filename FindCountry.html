@@ -148,9 +148,16 @@
 				
 			initLanguage();
 		
-			updateMap();	
+			updateMapLanguage();
 		
 			updateUI();
+		}
+		
+		function updateMapLanguage() {
+			for (var i = 0, len = statesData.features.length; i < len; i++) {
+				var layer = jsonToFeature[statesData.features[i].id];
+				layer.bindPopup(getLocalizedFeatureName(statesData.features[i]));
+			}
 		}
 		
 		function style(feature) {
@@ -188,7 +195,6 @@
 
 		function onEachFeature(feature, layer) {
 			jsonToFeature[feature.id] = layer;
-			layer.bindPopup(getLocalizedFeatureName(feature));
 
 			layer.on({
 				click: zoomToFeature
@@ -212,6 +218,8 @@
 				style: style,
 				onEachFeature: onEachFeature
 			}).addTo(map);
+
+			updateMapLanguage();
 		}
 		
 		map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s world Quiz</a>');
