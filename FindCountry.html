@@ -38,19 +38,23 @@
 	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
 
 	<script type="text/javascript" src="countries.js"></script>
+	<script type="text/javascript" src="de.js"></script>
 	<script type="text/javascript">
 
 		var map = L.map('map');
-		map.on('move', onMapMove);
 		var countryIdx;
+		var resolved = false;
+		var highlightedFeature;
+		var lang = "en";				
+		var geojson;		
+		var jsonToFeature;
+		var namesLookUp;
 		
-
 		// control that shows state info on hover
 		var info = L.control();
 
 		info.onAdd = function (map) {
 			this._div = L.DomUtil.create('div', 'info');
-			nextCountry();
 			return this._div;
 		};
 				
@@ -59,9 +63,22 @@
 		};
 
 		info.addTo(map);
-		var highlightedFeature;
 		
-		function onMapMove() {
+		initLanguage();
+		
+		updateMap();	
+				
+		nextCountry();
+		
+		function initLanguage(id) {
+			if(lang == "de")
+			{
+				namesLookUp = {};
+				for (var i = 0, len = names_de.length; i < len; i++) 
+					namesLookUp[names_de[i].id] = names_de[i];
+			}
+			else 
+				namesLookUp = undefined;
 		}
 	
 		function checkResult(id) {
@@ -78,13 +95,10 @@
 				geojson.resetStyle(highlightedFeature);
 				
 			countryIdx = Math.floor(Math.random() * statesData.features.length);
-	
-			html = '<h4>Find the country</h4><div style="text-align: center">' + statesData.features[countryIdx].properties.name;		
-			html = html + '</div><div style="text-align: right"><input type="button" value="resolve" onclick="resolve()"></div>';
-	
-			info.update(html);
-		
 			map.fitWorld();
+
+			resolved = false;
+			updateUI();
 		}
 		
 		function resolve() {
@@ -92,10 +106,50 @@
 			highlightFeature(feature, '#afa');
 			map.fitBounds(feature.getBounds());
 
-			html = '<h4>Find the country</h4><div style="text-align: center">' + statesData.features[countryIdx].properties.name;		
-			html = html + '</div><div style="text-align: right"><input type="button" value="next" onclick="nextCountry()"></div>';
+			resolved = true;
+			updateUI();
+		}
+		
+		function updateUI() {
+			var headerText = "Find the country";
+			var resolveText = "Resolve";
+			var nextText = "Next";
+		
+			if(lang == "de")
+			{
+				headerText = "Finde das Land";
+				resolveText = "L&ouml;sen";
+			}
+			
+			var html = '<h4>' + headerText + '</h4><div style="text-align: center">' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</div>';		
+			html = html + '<div style="text-align: right">';
+			
+			if(lang == "de")
+				html = html + '<input type="button" value="EN" onclick="toggleLanguage()">';
+			else
+				html = html + '<input type="button" value="DE" onclick="toggleLanguage()">';
+			
+			if(resolved) 					
+				html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
+			else
+				html = html + '<input type="button" value="' + resolveText + '" onclick="resolve()">';
+				
+			html = html + '</div>';
 	
 			info.update(html);
+		}
+		
+		function toggleLanguage() {
+			if(lang == "de")
+				lang = "en";
+			else 
+				lang = "de";
+				
+			initLanguage();
+		
+			updateMap();	
+		
+			updateUI();
 		}
 		
 		function style(feature) {
@@ -106,7 +160,6 @@
 				dashArray: '3',
 				fillOpacity: 1.0,
 				fillColor: '#00f'
-//				fillColor: getColor(feature.properties.density)
 			};
 		}
 		
@@ -127,40 +180,38 @@
 			layer.bringToFront();
 		}
 
-		function onMouseOver(e) {
-			highlightFeature(e.target, '#afa');
-		}
-
-		var geojson;
-
-		function resetHighlight(e) {
-			geojson.resetStyle(e.target);
-		}
-
 		function zoomToFeature(e) {
-//			map.fitBounds(e.target.getBounds());
-
 			var layer = e.target;
 			checkResult(layer.feature.id);
-//			info.update(layer.feature);
 		}
-		
-		var jsonToFeature = {};
 
 		function onEachFeature(feature, layer) {
 			jsonToFeature[feature.id] = layer;
-			layer.bindPopup(feature.properties.name);
+			layer.bindPopup(getLocalizedFeatureName(feature));
+
 			layer.on({
-//				mouseover: onMouseOver,
-//				mouseout: resetHighlight,
 				click: zoomToFeature
 			});
 		}		
+		
+		function getLocalizedFeatureName(feature) {
+			if(namesLookUp && namesLookUp[feature.id])
+				return namesLookUp[feature.id].name;
+			else
+				return feature.properties.name;
+		}
 
-		geojson = L.geoJson(statesData, {
-			style: style,
-			onEachFeature: onEachFeature
-		}).addTo(map);
+		function updateMap() {		
+			jsonToFeature = {};
+			
+			if(geojson)
+				map.removeLayer(geojson);
+				
+			geojson = L.geoJson(statesData, {
+				style: style,
+				onEachFeature: onEachFeature
+			}).addTo(map);
+		}
 		
 		map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s world Quiz</a>');
 	</script>
