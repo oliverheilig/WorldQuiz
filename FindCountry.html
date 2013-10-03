@@ -45,7 +45,7 @@
 		var countryIdx;
 		var resolved = false;
 		var highlightedFeature;
-		var lang = "en";				
+		var lang = (navigator.language) ? navigator.language : navigator.userLanguage; 				
 		var geojson;		
 		var jsonToFeature;
 		var namesLookUp;
@@ -104,7 +104,7 @@
 		function resolve() {
 			var feature = jsonToFeature[statesData.features[countryIdx].id];
 			highlightFeature(feature, '#afa');
-			map.fitBounds(feature.getBounds());
+			map.fitBounds(feature.getBounds().pad(.3));
 
 			resolved = true;
 			updateUI();
@@ -114,11 +114,12 @@
 			var headerText = "Find the country";
 			var resolveText = "Resolve";
 			var nextText = "Next";
-		
+			
 			if(lang == "de")
 			{
 				headerText = "Finde das Land";
 				resolveText = "L&ouml;sen";
+				nextText = "Weiter";
 			}
 			
 			var html = '<h4>' + headerText + '</h4><div style="text-align: center">' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</div>';		
