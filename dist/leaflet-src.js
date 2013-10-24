@@ -509,7 +509,7 @@ L.Mixin.Events.fire = L.Mixin.Events.fireEvent;
 
 (function () {
 
-	var ie = !!window.ActiveXObject,
+	var ie = 'ActiveXObject' in window,
 	    ie6 = ie && !window.XMLHttpRequest,
 	    ie7 = ie && !document.querySelector,
 		ielt9 = ie && !document.addEventListener,
@@ -1615,6 +1615,8 @@ L.Map = L.Class.extend({
 		    swPoint = this.project(bounds.getSouthWest(), zoom),
 		    nePoint = this.project(bounds.getNorthEast(), zoom),
 		    center = this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom);
+
+		zoom = options && options.maxZoom ? Math.min(options.maxZoom, zoom) : zoom;
 
 		return this.setView(center, zoom, options);
 	},
@@ -3445,6 +3447,7 @@ L.Marker = L.Class.extend({
 	options: {
 		icon: new L.Icon.Default(),
 		title: '',
+		alt: '',
 		clickable: true,
 		draggable: false,
 		keyboard: true,
@@ -3558,6 +3561,10 @@ L.Marker = L.Class.extend({
 
 			if (options.title) {
 				icon.title = options.title;
+			}
+			
+			if (options.alt) {
+				icon.alt = options.alt;
 			}
 		}
 
@@ -3894,10 +3901,18 @@ L.Popup = L.Class.extend({
 		}
 	},
 
+	getLatLng: function () {
+		return this._latlng;
+	},
+
 	setLatLng: function (latlng) {
 		this._latlng = L.latLng(latlng);
 		this.update();
 		return this;
+	},
+
+	getContent: function () {
+		return this._content;
 	},
 
 	setContent: function (content) {
@@ -3966,9 +3981,10 @@ L.Popup = L.Class.extend({
 		L.DomEvent.disableClickPropagation(wrapper);
 
 		this._contentNode = L.DomUtil.create('div', prefix + '-content', wrapper);
-		L.DomEvent.on(this._contentNode, 'mousewheel', L.DomEvent.stopPropagation);
-		L.DomEvent.on(this._contentNode, 'MozMousePixelScroll', L.DomEvent.stopPropagation);
+
+		L.DomEvent.disableScrollPropagation(this._contentNode);
 		L.DomEvent.on(wrapper, 'contextmenu', L.DomEvent.stopPropagation);
+
 		this._tipContainer = L.DomUtil.create('div', prefix + '-tip-container', container);
 		this._tip = L.DomUtil.create('div', prefix + '-tip', this._tipContainer);
 	},
@@ -4204,6 +4220,10 @@ L.Marker.include({
 			this._popupHandlersAdded = false;
 		}
 		return this;
+	},
+
+	getPopup: function () {
+		return this._popup;
 	},
 
 	_movePopup: function (e) {
@@ -5605,10 +5625,12 @@ L.Polygon = L.Polyline.extend({
 	},
 
 	initialize: function (latlngs, options) {
-		var i, len, hole;
-
 		L.Polyline.prototype.initialize.call(this, latlngs, options);
+		this._initWithHoles(latlngs);
+	},
 
+	_initWithHoles: function (latlngs) {
+		var i, len, hole;
 		if (latlngs && L.Util.isArray(latlngs[0]) && (typeof latlngs[0][0] !== 'number')) {
 			this._latlngs = this._convertLatLngs(latlngs[0]);
 			this._holes = latlngs.slice(1);
@@ -5646,6 +5668,15 @@ L.Polygon = L.Polyline.extend({
 			for (j = 0, len2 = this._holes[i].length; j < len2; j++) {
 				this._holePoints[i][j] = this._map.latLngToLayerPoint(this._holes[i][j]);
 			}
+		}
+	},
+
+	setLatLngs: function (latlngs) {
+		if (latlngs && L.Util.isArray(latlngs[0]) && (typeof latlngs[0][0] !== 'number')) {
+			this._initWithHoles(latlngs);
+			return this.redraw();
+		} else {
+			return L.Polyline.prototype.setLatLngs.call(this, latlngs);
 		}
 	},
 
@@ -6401,16 +6432,24 @@ L.DomEvent = {
 		return this;
 	},
 
+	disableScrollPropagation: function (el) {
+		var stop = L.DomEvent.stopPropagation;
+
+		return L.DomEvent
+			.on(el, 'mousewheel', stop)
+			.on(el, 'MozMousePixelScroll', stop);
+	},
+
 	disableClickPropagation: function (el) {
 		var stop = L.DomEvent.stopPropagation;
 
 		for (var i = L.Draggable.START.length - 1; i >= 0; i--) {
-			L.DomEvent.addListener(el, L.Draggable.START[i], stop);
+			L.DomEvent.on(el, L.Draggable.START[i], stop);
 		}
 
 		return L.DomEvent
-			.addListener(el, 'click', L.DomEvent._fakeStop)
-			.addListener(el, 'dblclick', stop);
+			.on(el, 'click', L.DomEvent._fakeStop)
+			.on(el, 'dblclick', stop);
 	},
 
 	preventDefault: function (e) {
@@ -6558,11 +6597,13 @@ L.Draggable = L.Class.extend({
 		END: {
 			mousedown: 'mouseup',
 			touchstart: 'touchend',
+			pointerdown: 'touchend',
 			MSPointerDown: 'touchend'
 		},
 		MOVE: {
 			mousedown: 'mousemove',
 			touchstart: 'touchmove',
+			pointerdown: 'touchmove',
 			MSPointerDown: 'touchmove'
 		}
 	},
@@ -6605,15 +6646,9 @@ L.Draggable = L.Class.extend({
 		L.DomUtil.disableImageDrag();
 		L.DomUtil.disableTextSelection();
 
-		var first = e.touches ? e.touches[0] : e,
-		    el = first.target;
-
-		// if touching a link, highlight it
-		if (L.Browser.touch && el.tagName && el.tagName.toLowerCase() === 'a') {
-			L.DomUtil.addClass(el, 'leaflet-active');
-		}
-
 		if (this._moving) { return; }
+
+		var first = e.touches ? e.touches[0] : e;
 
 		this._startPoint = new L.Point(first.clientX, first.clientY);
 		this._startPos = this._newPos = L.DomUtil.getPosition(this._element);
@@ -6624,7 +6659,10 @@ L.Draggable = L.Class.extend({
 	},
 
 	_onMove: function (e) {
-		if (e.touches && e.touches.length > 1) { return; }
+		if (e.touches && e.touches.length > 1) {
+			this._moved = true;
+			return;
+		}
 
 		var first = (e.touches && e.touches.length === 1 ? e.touches[0] : e),
 		    newPoint = new L.Point(first.clientX, first.clientY),
@@ -8308,8 +8346,9 @@ L.Control.Layers = L.Control.extend({
 		container.setAttribute('aria-haspopup', true);
 
 		if (!L.Browser.touch) {
-			L.DomEvent.disableClickPropagation(container);
-			L.DomEvent.on(container, 'mousewheel', L.DomEvent.stopPropagation);
+			L.DomEvent
+				.disableClickPropagation(container)
+				.disableScrollPropagation(container);
 		} else {
 			L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
 		}
@@ -9045,7 +9084,8 @@ L.Map.include({
 
 		var data = {
 			latlng: latlng,
-			bounds: bounds
+			bounds: bounds,
+			timestamp: pos.timestamp
 		};
 
 		for (var i in pos.coords) {
