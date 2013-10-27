@@ -161,12 +161,15 @@
  	}
 		
 	function resolve() {			
+   	    OpenStreetMap_Mapnik.addTo(map);
 		var lnglat = statesData.features[countryIdx].geometry.coordinates;
 		var latlng = new L.LatLng(lnglat[1], lnglat[0]);
 		cityMarker = L.marker(latlng, {draggable: false, clickable:false, opacity: .5});
 		cityMarker.addTo(map);
 
 		if(marker) {
+			map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()]).pad(.5));
+
 			var p1 = latLngToPtvMercator(latlng);
 			var p2 = latLngToPtvMercator(marker.getLatLng());
 			var c = ptvMercatorToLatLng(new L.Point((p1.x+p2.x) / 2, (p1.y+p2.y) / 2));
@@ -184,14 +187,11 @@
 				.setLatLng(c)
 				.setContent('' + Math.round(realDist) + ' km')
 				.openOn(map);
-		
-			map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()],{padding:new L.Point(30,30)}));
 		}
 		else {
 			map.setView(latlng, 4);
 		}
 		resolved = true;
-   	    OpenStreetMap_Mapnik.addTo(map);
 		updateUI();
 	}
 		
