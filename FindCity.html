@@ -45,21 +45,18 @@
 	var cityMarker = null;
 	var line = null;
 	var popup = null;
+	var OpenStreetMap_Mapnik = null;
 	
 	var lang = "en";
 
 	map.on('click', setMarker);
 
 	var Esri_WorldShadedRelief = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
-		attribution: 'Tiles &copy; Esri &mdash; Source: Esri',
+		attribution: '&copy; <a href="http://www.esri.com/software/arcgis/arcgis-online-map-and-geoservices/map-services">Esri</a>',
 		maxZoom: 13
 	});
 	Esri_WorldShadedRelief.addTo(map);	
 	
-	var OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 	opacity: .5,
-		attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-	});
-
 	// control that shows state info on hover
 	var info = L.control();
 
@@ -137,10 +134,12 @@
 			map.removeLayer(popup);
 			popup = null;
 		}
+		if(OpenStreetMap_Mapnik) {
+			map.removeLayer(OpenStreetMap_Mapnik);
+			OpenStreetMap_Mapnik = null;
+		}
 		
 		map.fitWorld();
-
-		map.removeLayer(OpenStreetMap_Mapnik);
 
 		resolved = false;
 		updateUI();
@@ -161,6 +160,10 @@
  	}
 		
 	function resolve() {			
+		OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 	opacity: .5,
+		attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+	});
+
    	    OpenStreetMap_Mapnik.addTo(map);
 		var lnglat = statesData.features[countryIdx].geometry.coordinates;
 		var latlng = new L.LatLng(lnglat[1], lnglat[0]);
@@ -168,8 +171,6 @@
 		cityMarker.addTo(map);
 
 		if(marker) {
-			map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()]).pad(.5));
-
 			var p1 = latLngToPtvMercator(latlng);
 			var p2 = latLngToPtvMercator(marker.getLatLng());
 			var c = ptvMercatorToLatLng(new L.Point((p1.x+p2.x) / 2, (p1.y+p2.y) / 2));
@@ -182,12 +183,17 @@
 
 			line = new L.Polyline([latlng, marker.getLatLng()]);
 			line.addTo(map);
-		
+
 			popup = L.popup()
 				.setLatLng(c)
-				.setContent('' + Math.round(realDist) + ' km')
-				.openOn(map);
-		}
+				.setContent('' + Math.round(realDist) + ' km');
+
+			map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()]).pad(.5));
+				
+			popup.openOn(map);
+
+				}
+				
 		else {
 			map.setView(latlng, 4);
 		}
