@@ -34,7 +34,8 @@
 
 	<script src="./dist/leaflet.js"></script>
 	<script type="text/javascript" src="cities.js"></script>
-//	<script type="text/javascript" src="cities_de.js"></script>
+	<script type="text/javascript" src="rand.js"></script>
+<!--	<script type="text/javascript" src="cities_de.js"></script> -->
 	<script type="text/javascript">
 
 	var map = L.map('map');
@@ -46,9 +47,21 @@
 	var line = null;
 	var popup = null;
 	var OpenStreetMap_Mapnik = null;
+	var cnt = 0;
 	
 	var lang = "en";
-
+	
+	if(get("id"))
+		randomize(get("id"));
+	else
+		randomize(Date());		
+	
+	var shuffleArray = new Array();
+	for(var i = 0; i < statesData.features.length; i++) {
+		shuffleArray[i] = i;
+	}
+	shuffle(shuffleArray);
+	
 	map.on('click', setMarker);
 
 	var Esri_WorldShadedRelief = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
@@ -97,6 +110,11 @@
 				
 	nextCountry();
 	
+function get(name){
+   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+      return decodeURIComponent(name[1]);
+}
+
 	function setMarker(e) {
 		if(resolved)
 			return
@@ -113,11 +131,10 @@
 	function onDragging(e) {
     //map.invalidateSize()
     marker.setLatLng(e.target.getLatLng());
- 
-}
+	}
 			
 	function nextCountry() {				
-		countryIdx = Math.floor(Math.random() * statesData.features.length);
+		countryIdx = shuffleArray[cnt++ % shuffleArray.length];
 		if(marker) {
 			map.removeLayer(marker);
 			marker = null;
