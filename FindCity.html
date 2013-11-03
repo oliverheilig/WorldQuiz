@@ -40,9 +40,6 @@
 	var countryIdx;
 	var resolved = false;
 	var highlightedFeature;
-	var lang = (navigator.language) ? navigator.language : navigator.userLanguage; 	
-	if(lang)
-		lang=lang.substr(0,2).toLowerCase();
 	var geojson;		
 	var jsonToFeature;
 	var namesLookUp;		
@@ -67,12 +64,6 @@
 		var resolveText = "Solve";
 		var nextText = "Next";
 			
-		if(lang == "de") {
-			headerText = "Finde die Stadt";
-			resolveText = "Aufl&ouml;sen";
-			nextText = "Weiter";
-		}
-			
 		var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';		
 		html = html + '<div style="text-align: right">';
 			
@@ -86,40 +77,11 @@
 		this._div.innerHTML = html;
 	};
 	info.addTo(map);
-		
-	// control that toggles the language
-	var langSelect = L.control({position:"bottomleft"});
-
-	langSelect.onAdd = function (map) {
-		this._div = L.DomUtil.create('div', 'leaflet-bar');
-		return this._div;
-	};				
-
-	langSelect.update = function () {		
-		if(lang == "de")
-			this._div.innerHTML = '<input type="button" value="EN" onclick="toggleLanguage()">';
-		else
-			this._div.innerHTML = '<input type="button" value="DE" onclick="toggleLanguage()">';
-	};
-//	langSelect.addTo(map);
-		
-//	initLanguage();
-		
+				
 	updateMap();	
 				
 	nextCountry();
-
-	
-	function initLanguage() {
-		if(lang == "de") {
-			namesLookUp = {};
-			for (var i = 0, len = names_de.length; i < len; i++) 
-				namesLookUp[names_de[i].id] = names_de[i];
-		}
-		else 
-			namesLookUp = undefined;
-	}
-	
+		
 	function checkResult(feature) {
 		if(feature.id == statesData.features[countryIdx].id)
 			resolve();
@@ -162,28 +124,8 @@
 		
 	function updateUI() {
 		info.update();
-		langSelect.update();
 	}
-		
-	function toggleLanguage() {
-		if(lang == "de")
-			lang = "en";
-		else 
-			lang = "de";
-			
-//		initLanguage();	
-		updateMapLanguage();	
-		updateUI();
-	}
-		
-	function updateMapLanguage() {
-	return;
-		for (var i = 0, len = statesData.features.length; i < len; i++) {
-			var layer = jsonToFeature[statesData.features[i].id];
-			layer.bindPopup(getLocalizedFeatureName(statesData.features[i]));
-		}
-	}
-		
+				
 	function style(feature) {
 		return {
 			weight: 2,
@@ -236,8 +178,6 @@
 			style: style,
 			onEachFeature: onEachFeature
 		}).addTo(map);
-
-		updateMapLanguage();
 	}
 		
 	map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s World Quiz</a>');

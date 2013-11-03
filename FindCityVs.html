@@ -47,9 +47,7 @@
 	var popup = null;
 	var OpenStreetMap_Mapnik = null;
 	var cnt = 0;
-	
-	var lang = "en";
-	
+		
 	if(get("id"))
 		randomize(get("id"));
 	else
@@ -84,12 +82,6 @@
 		var headerText = "Find the City";
 		var resolveText = "Solve";
 		var nextText = "Next";
-			
-		if(lang == "de") {
-			headerText = "Finde die Stadt";
-			resolveText = "Aufl&ouml;sen";
-			nextText = "Weiter";
-		}
 			
 		var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';		
 		html = html + '<div style="text-align: right">';
@@ -221,16 +213,12 @@ function get(name){
 	function updateUI() {
 		info.update();
 	}
-				
-	function updateMapLanguage() {
-	}
-				
+								
 	function getLocalizedFeatureName(feature) {
 			return feature.properties.city;
 	}
 
 	function updateMap() {		
-		updateMapLanguage();
 	}
 		
 	map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s World Quiz</a>');
