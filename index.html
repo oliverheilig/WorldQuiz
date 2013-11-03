@@ -45,44 +45,69 @@
 		<h2>International</h2>
 		<div class="one-third column">
 			<h3>Find The Country</h3>
-			<p>Find the country with the name displayed in the upper right corner. Click or tap on the country shape. The country is highlighted green if you clicked the correct country.</p>
-			<a href="FindCountry.html" class="full-width button">Play!</a>
+			<form action="FindCountry.html">
+				<p>Find the country with the name displayed in the upper right corner. 
+				Click or tap on the country shape. The country is highlighted green 
+				if you clicked the correct country.
+				You can play the game in multiplayer mode. If each player enters the same text 
+				before starting the game, they all get the same countries. The player which finds
+				the country first wins the round.</p>
+				<label for="regularInput">Game Id</label>
+				<input type="text" id="regularInput" name="id" />
+				<button class="full-width button type="submit">Play!</button>
+			</form>
 		</div>
 		<div class="one-third column">
 			<h3>Find The City</h3>
-			<p>Find the city with the name displayed in the upper right corner. Click or tap on the icon. The icon is highlighted green if you clicked the correct city.</p>
-			<a href="FindCity.html" class="full-width button">Play!</a>
+			<form action="FindCity.html">
+				<p>Find the city with the name displayed in the upper right corner. 
+				Click or tap on the icon. The icon is highlighted green if you clicked the correct city.
+				You can play the game in multiplayer mode. If each player enters the same text 
+				before starting the game, they all get the same cities. The player which finds
+				the city first wins the round.</p>
+				<label for="regularInput">Game Id</label>
+				<input type="text" id="regularInput" name="id" />
+				<button class="full-width button type="submit">Play!</button>
+			</form>
 		</div>
 		<div class="one-third column">
-		<form action="FindCityVs.html">
-			<h3>Find The City (vs)</h3>
-			<p>Try to locate the the city. Place the marker on the map. After you click "Solve", the distance to the real location of the city is displayed.
-			You can play the game in a vs mode. If each player enters the same text before starting the game, they all get the same
-			cities. You can compare your distances then.</p>
-			<label for="regularInput">Game Id</label>
-			<input type="text" name="id" />
-  		  <button class="full-width button type="submit">Play!</button>
-		</form>
+			<h3>Locate The City</h3>
+			<form action="LocateCity.html">
+				<p>Try to locate the the city. Place the marker on the map. After you click "Solve", the distance to the real location of the city is displayed.
+				You can play the game in multiplayer mode. If each player enters the same text before 
+				starting the game, they all get the same
+				cities. You can compare your distances then.</p>
+				<label for="regularInput">Game Id</label>
+				<input type="text" id="regularInput" name="id" />
+				<button class="full-width button type="submit">Play!</button>
+			</form>
 		</div>
 		</div>
 		<div class="eight columns">
 		<h2>Deutsch</h2>
 		<div class="one-third column">
 			<h3>Finde die Stadt</h3>
-			<p>Finde die Stadt die oben rechts angezeigt wird.</p>
-			<a href="FindCityDe.html" class="full-width button">Los!</a>
+			<form action="FindCityDe.html">
+				<p>Finde die Stadt die oben rechts angezeigt wird.
+				Ihr könnt das Spiel auch gegeneinander mit mehreren Computern oder Smartphones
+				spielen. Wenn jeder Spieler denselben Text unten eingibt, bekommen alle die gleichen Städte angezeigt.
+				Wer die Stadt zuerst findet gewinnt die Runde.</p>
+				<label for="regularInput">Game Id</label>
+				<input type="text" id="regularInput" name="id" />
+				<button class="full-width button type="submit">Los!</button>
+			</form>
 		</div>
 		<div class="one-third column">
-		<form action="FindCityVsDe.html">
-			<h3>Finde die Stadt (Mehrspieler)</h3>
-			<p>Versuche de Lage der Stadt in der Karte zu markieren. Wenn du auflösen drückst wird der Abstand zur 
-			richtgen Position angezeigt. Du kannst das Spiel auch gegeneinander mit mehreren Computern oder Smartphones
-			spielen. Wenn jeder Spieler den selben Text unten eingibt, bekommen alle dieselben Städte angezeigt.
-			Dann könnt ihr die Entfernungen vergleichen.</p>
-			<label for="regularInput">Game Id</label>
-			<input type="text" name="id" />
-  		  <button class="full-width button type="submit">Los!</button>
-		</form>
+			<h3>Orte die Stadt</h3>
+			<form action="LocateCityDe.html">
+				<p>Versuche de Lage der Stadt in der Karte zu markieren. Wenn du auflösen drückst wird der Abstand zur 
+				richtgen Position angezeigt. Ihr könnt das Spiel auch gegeneinander mit mehreren Computern oder Smartphones
+				spielen. Wenn jeder Spieler denselben Text unten eingibt, bekommen alle die gleichen Städte angezeigt.
+				Dann könnt ihr die Entfernungen vergleichen.</p>
+				<label for="regularInput">Game Id</label>
+				<input type="text" id="regularInput" name="id" />
+				<button class="full-width button type="submit">Los!</button>
+			</form>
 		</div>
 		</div>
 	</div>
