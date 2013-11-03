@@ -15,5 +15,14 @@
 	},
 	"type": "Feature",
 	"id": "Karlsruhe"
-	}]
+	},
+	{
+		"geometry": {
+		"type": "Point",
+		"coordinates": [9.182778, 48.775556]
+	},
+	"type": "Feature",
+	"id": "Stuttgart"
+	}
+	]
 };
