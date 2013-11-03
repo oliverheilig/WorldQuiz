@@ -137,6 +137,7 @@ L.Util = {
 
 	compileTemplate: function (str, data) {
 		// based on https://gist.github.com/padolsey/6008842
+		str = str.replace(/"/g, '\\\"');
 		str = str.replace(/\{ *([\w_]+) *\}/g, function (str, key) {
 			return '" + o["' + key + '"]' + (typeof data[key] === 'function' ? '(o)' : '') + ' + "';
 		});
@@ -521,6 +522,7 @@ L.Mixin.Events.fire = L.Mixin.Events.fireEvent;
 	    phantomjs = ua.indexOf('phantom') !== -1,
 	    android = ua.indexOf('android') !== -1,
 	    android23 = ua.search('android [23]') !== -1,
+		gecko = ua.indexOf('gecko') !== -1,
 
 	    mobile = typeof orientation !== undefined + '',
 	    msPointer = window.navigator && window.navigator.msPointerEnabled &&
@@ -577,6 +579,7 @@ L.Mixin.Events.fire = L.Mixin.Events.fireEvent;
 		ie7: ie7,
 		ielt9: ielt9,
 		webkit: webkit,
+		gecko: gecko && !webkit && !window.opera && !ie,
 
 		android: android,
 		android23: android23,
@@ -887,8 +890,7 @@ L.DomUtil = {
 		    el = element,
 		    docBody = document.body,
 		    docEl = document.documentElement,
-		    pos,
-		    ie7 = L.Browser.ie7;
+		    pos;
 
 		do {
 			top  += el.offsetTop  || 0;
@@ -934,19 +936,6 @@ L.DomUtil = {
 
 			top  -= el.scrollTop  || 0;
 			left -= el.scrollLeft || 0;
-
-			// webkit (and ie <= 7) handles RTL scrollLeft different to everyone else
-			// https://code.google.com/p/closure-library/source/browse/trunk/closure/goog/style/bidi.js
-			if (!L.DomUtil.documentIsLtr() && (L.Browser.webkit || ie7)) {
-				left += el.scrollWidth - el.clientWidth;
-
-				// ie7 shows the scrollbar by default and provides clientWidth counting it, so we
-				// need to add it back in if it is visible; scrollbar is on the left as we are RTL
-				if (ie7 && L.DomUtil.getStyle(el, 'overflow-y') !== 'hidden' &&
-				           L.DomUtil.getStyle(el, 'overflow') !== 'hidden') {
-					left += 17;
-				}
-			}
 
 			el = el.parentNode;
 		} while (el);
@@ -2923,6 +2912,11 @@ L.TileLayer = L.Class.extend({
 
 		this._adjustTilePoint(tilePoint);
 		tile.src     = this.getTileUrl(tilePoint);
+
+		this.fire('tileloadstart', {
+			tile: tile,
+			url: tile.src
+		});
 	},
 
 	_tileLoaded: function () {
@@ -6469,11 +6463,14 @@ L.DomEvent = {
 	},
 
 	getMousePosition: function (e, container) {
-
-		var ie7 = L.Browser.ie7,
-		    body = document.body,
+		var body = document.body,
 		    docEl = document.documentElement,
-		    x = e.pageX ? e.pageX - body.scrollLeft - docEl.scrollLeft: e.clientX,
+		    //gecko makes scrollLeft more negative as you scroll in rtl, other browsers don't
+			//ref: https://code.google.com/p/closure-library/source/browse/closure/goog/style/bidi.js
+			x = L.DomUtil.documentIsLtr() ?
+					(e.pageX ? e.pageX - body.scrollLeft - docEl.scrollLeft : e.clientX) :
+						(L.Browser.gecko ? e.pageX - body.scrollLeft - docEl.scrollLeft :
+						 e.pageX ? e.pageX - body.scrollLeft + docEl.scrollLeft : e.clientX),
 		    y = e.pageY ? e.pageY - body.scrollTop - docEl.scrollTop: e.clientY,
 		    pos = new L.Point(x, y);
 
@@ -6484,19 +6481,6 @@ L.DomEvent = {
 		var rect = container.getBoundingClientRect(),
 		    left = rect.left - container.clientLeft,
 		    top = rect.top - container.clientTop;
-
-		// webkit (and ie <= 7) handles RTL scrollLeft different to everyone else
-		// https://code.google.com/p/closure-library/source/browse/trunk/closure/goog/style/bidi.js
-		if (!L.DomUtil.documentIsLtr() && (L.Browser.webkit || ie7)) {
-			left += container.scrollWidth - container.clientWidth;
-
-			// ie7 shows the scrollbar by default and provides clientWidth counting it, so we
-			// need to add it back in if it is visible; scrollbar is on the left as we are RTL
-			if (ie7 && L.DomUtil.getStyle(container, 'overflow-y') !== 'hidden' &&
-			           L.DomUtil.getStyle(container, 'overflow') !== 'hidden') {
-				left += 17;
-			}
-		}
 
 		return pos._subtract(new L.Point(left, top));
 	},
@@ -7268,7 +7252,8 @@ L.extend(L.DomEvent, {
  */
 
 L.Map.mergeOptions({
-	touchZoom: L.Browser.touch && !L.Browser.android23
+	touchZoom: L.Browser.touch && !L.Browser.android23,
+	bounceAtZoomLimits: true
 });
 
 L.Map.TouchZoom = L.Handler.extend({
@@ -7320,6 +7305,11 @@ L.Map.TouchZoom = L.Handler.extend({
 		this._delta = p1._add(p2)._divideBy(2)._subtract(this._startCenter);
 
 		if (this._scale === 1) { return; }
+
+		if (!map.options.bounceAtZoomLimits) {
+			if ((map.getZoom() === map.getMinZoom() && this._scale < 1) ||
+			    (map.getZoom() === map.getMaxZoom() && this._scale > 1)) { return; }
+		}
 
 		if (!this._moved) {
 			L.DomUtil.addClass(map._mapPane, 'leaflet-touching');
