@@ -103,16 +103,15 @@
 			this._div.innerHTML = '<input type="button" value="DE" onclick="toggleLanguage()">';
 	};
 	langSelect.addTo(map);
-	
-	
-	initLanguage();
+		
+//	initLanguage();
 		
 	updateMap();	
 				
 	nextCountry();
 
 	
-	function initLanguage(id) {
+	function initLanguage() {
 		if(lang == "de") {
 			namesLookUp = {};
 			for (var i = 0, len = names_de.length; i < len; i++) 
@@ -122,12 +121,11 @@
 			namesLookUp = undefined;
 	}
 	
-	function checkResult(id) {
-		if(id == statesData.features[countryIdx].id)
+	function checkResult(feature) {
+		if(feature.id == statesData.features[countryIdx].id)
 			resolve();
 		else {
-			var feature = jsonToFeature[id];
-			highlightFeature(feature, '#faa');
+			highlightFeature(feature, 'marker-red');
 		}
 	}
 		
@@ -152,9 +150,7 @@
 		});
    	    OpenStreetMap_Mapnik.addTo(map);
 
-		var feature = jsonToFeature[statesData.features[countryIdx].id];
-
-		highlightFeature(feature, '#afa');
+		highlightFeature(statesData.features[countryIdx], 'marker-green');
 		
 		map.setView([statesData.features[countryIdx].geometry.coordinates[1],
 		statesData.features[countryIdx].geometry.coordinates[0]], 8);
@@ -180,6 +176,7 @@
 	}
 		
 	function updateMapLanguage() {
+	return;
 		for (var i = 0, len = statesData.features.length; i < len; i++) {
 			var layer = jsonToFeature[statesData.features[i].id];
 			layer.bindPopup(getLocalizedFeatureName(statesData.features[i]));
@@ -197,18 +194,20 @@
 		};
 	}
 		
-	function highlightFeature(layer, c) {
+	function highlightFeature(feature, c) {
 		if(highlightedFeature)
-			geojson.resetStyle(highlightedFeature);
-
-		highlightedFeature = layer;
-
-//		layer.bringToFront();
+			map.removeLayer(highlightedFeature);
+			
+		highlightedFeature = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 
+		{zIndexOffset: 1000, icon:new L.Icon.Default(
+		{iconUrl:"dist/images/" + c + ".png", iconRetinaUrl:"dist/images/" + c + "-2x.png"})}).addTo(map)
+		.bindPopup(getLocalizedFeatureName(feature))
+		.openPopup();	
 	}
 
 	function zoomToFeature(e) {
 		var layer = e.target;
-		checkResult(layer.feature.id);
+		checkResult(layer.feature);
 	}
 
 	function onEachFeature(feature, layer) {
