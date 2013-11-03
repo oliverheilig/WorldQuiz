@@ -134,8 +134,10 @@
 			map.removeLayer(OpenStreetMap_Mapnik);
 			OpenStreetMap_Mapnik = null;
 		}
-		if(highlightedFeature) 
-			geojson.resetStyle(highlightedFeature);
+		if(highlightedFeature) {
+			map.removeLayer(highlightedFeature);
+			highlightedFeature = null;
+			}
 				
 		countryIdx = Math.floor(Math.random() * statesData.features.length);
 		map.fitWorld();
@@ -169,8 +171,8 @@
 			lang = "en";
 		else 
 			lang = "de";
-				
-		initLanguage();	
+			
+//		initLanguage();	
 		updateMapLanguage();	
 		updateUI();
 	}
