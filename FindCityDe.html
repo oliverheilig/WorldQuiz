@@ -34,6 +34,7 @@
 
 	<script src="./dist/leaflet.js"></script>
 	<script type="text/javascript" src="cities_de.js"></script>
+	<script type="text/javascript" src="states_de.js"></script>
 	<script type="text/javascript">
 
 	var map = L.map('map');
@@ -50,6 +51,7 @@
 		maxZoom: 13
 	});
 	Esri_WorldShadedRelief.addTo(map);	
+	L.geoJson(states_de, {style: {fill: false, opacity: 1, color: '#aaa'}}).addTo(map);
 
 	// control that shows state info on hover
 	var info = L.control();
