@@ -1,229 +1,238 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<title>Linda's World Quiz</title>
-	<meta charset="utf-8" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Linda's World Quiz</title>
+    <meta charset="utf-8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-	<link rel="stylesheet" href="./dist/leaflet.css" />
-	<!--[if lte IE 8]><link rel="stylesheet" href="./dist/leaflet.ie.css" /><![endif]-->
+    <link rel="stylesheet" href="./dist/leaflet.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="./dist/leaflet.ie.css" /><![endif]-->
 
-	<style>
-		body {
-			padding: 0;
-			margin: 0;
-		}
-		html, body, #map {
-			height: 100%;
-		}
-		.info {
-			padding: 6px 8px;
-			font: 14px/16px Arial, Helvetica, sans-serif;
-			background: white;
-			background: rgba(255,255,255,0.8);
-		}
-		.info h4 {
-			margin: 5px 5px 5px 5px;
-			color: #777;
-		}
-	</style>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+        }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .info h4 {
+            margin: 5px 5px 5px 5px;
+            color: #777;
+        }
+    </style>
 </head>
+
 <body>
-	<div id="map"></div>
+    <div id="map"></div>
 
-	<script src="./dist/leaflet.js"></script>
-	<script type="text/javascript" src="cities.js"></script>
-	<script type="text/javascript" src="rand.js"></script>
-	<script type="text/javascript">
+    <script src="./dist/leaflet.js"></script>
+    <script type="text/javascript" src="cities.js"></script>
+    <script type="text/javascript" src="rand.js"></script>
+    <script type="text/javascript">
+        var map = L.map('map');
+        var countryIdx;
+        var resolved = false;
 
-	var map = L.map('map');
-	var countryIdx;
-	var resolved = false;
-	
-	var marker = null;
-	var cityMarker = null;
-	var line = null;
-	var popup = null;
-	var OpenStreetMap_Mapnik = null;
-	var cnt = 0;
-		
-	if(get("id"))
-		randomize(get("id"));
-	else
-		randomize(Date());		
-	
-	var shuffleArray = new Array();
-	for(var i = 0; i < statesData.features.length; i++) {
-		shuffleArray[i] = i;
-	}
-	shuffle(shuffleArray);
-	
-	map.on('click', setMarker);
+        var marker = null;
+        var cityMarker = null;
+        var line = null;
+        var popup = null;
+        var OpenStreetMap_Mapnik = null;
+        var cnt = 0;
 
-	var Esri_WorldShadedRelief = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
-		attribution: '&copy; <a href="http://www.esri.com/software/arcgis/arcgis-online-map-and-geoservices/map-services">Esri</a>',
-		noWrap: true, maxZoom: 13
-	});
-	Esri_WorldShadedRelief.addTo(map);	
-	
-	// control that shows state info on hover
-	var info = L.control();
+        if (get("id"))
+            randomize(get("id"));
+        else
+            randomize(Date());
 
-	info.onAdd = function (map) {
-		this._div = L.DomUtil.create('div', 'info leaflet-bar');
-		L.DomEvent.addListener(this._div, 'click', function (e) {
-		L.DomEvent.stopPropagation(e);
-		});
-		return this._div;
-	};				
+        var shuffleArray = new Array();
+        for (var i = 0; i < statesData.features.length; i++) {
+            shuffleArray[i] = i;
+        }
+        shuffle(shuffleArray);
 
-	info.update = function () {		
-		var headerText = "Find the City";
-		var resolveText = "Solve";
-		var nextText = "Next";
-			
-		var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';		
-		html = html + '<div style="text-align: right">';
-			
-		if(resolved) 					
-			html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
-		else
-			html = html + '<input type="button" value="' + resolveText + '" onclick="resolve()">';
-				
-		html = html + '</div>';
-			
-		this._div.innerHTML = html;
-	};
-	info.addTo(map);
-						
-	updateMap();	
-				
-	nextCountry();
-	
-function get(name){
-   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
-      return decodeURIComponent(name[1]);
-}
+        map.on('click', setMarker);
 
-	function setMarker(e) {
-		if(resolved)
-			return
-	
-		if(marker) 
-			marker.setLatLng(e.latlng);
- 		else {
-			marker = L.marker(e.latlng, {draggable: true, clickable:false, opacity: .5});
-			marker.on('drag', onDragging);
-			marker.addTo(map);
-		}
-	}
-	
-	function onDragging(e) {
-    //map.invalidateSize()
-    marker.setLatLng(e.target.getLatLng());
-	}
-			
-	function nextCountry() {				
-		countryIdx = shuffleArray[cnt++ % shuffleArray.length];
-		if(marker) {
-			map.removeLayer(marker);
-			marker = null;
-		}
-		if(cityMarker) {
-			map.removeLayer(cityMarker);
-			cityMarker = null;
-		}
-		if(line) {
-			map.removeLayer(line);
-			line = null;
-		}
-		if(popup) {
-			map.removeLayer(popup);
-			popup = null;
-		}
-		if(OpenStreetMap_Mapnik) {
-			map.removeLayer(OpenStreetMap_Mapnik);
-			OpenStreetMap_Mapnik = null;
-		}
-		
-		map.fitWorld();
+        var Esri_WorldShadedRelief = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; <a href="http://www.esri.com/software/arcgis/arcgis-online-map-and-geoservices/map-services">Esri</a>',
+            noWrap: true,
+            maxZoom: 13
+        });
+        Esri_WorldShadedRelief.addTo(map);
 
-		resolved = false;
-		updateUI();
-	}
-	
-	function latLngToPtvMercator(latlng)
-    {
-		return new L.Point(
-			6371000.0 * latlng.lng * Math.PI / 180,
-			6371000.0 * Math.log(Math.tan(Math.PI / 4 + latlng.lat * Math.PI / 360)));
-    }
-	
-	function ptvMercatorToLatLng(point)
-    {
-		return new L.LatLng(
-			(360 / Math.PI) * (Math.atan(Math.exp(point.y / 6371000.0)) - (Math.PI / 4)),
-			(180.0 / Math.PI) * (point.x / 6371000.0));
- 	}
-		
-	function resolve() {			
-		OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { noWrap: true, opacity: .5,
-			attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-		});
-   	    OpenStreetMap_Mapnik.addTo(map);
+         // control that shows state info on hover
+        var info = L.control();
 
-		var lnglat = statesData.features[countryIdx].geometry.coordinates;
-		var latlng = new L.LatLng(lnglat[1], lnglat[0]);
-		cityMarker = L.marker(latlng, {draggable: false, clickable:false, opacity: .5,
-					 icon:new L.Icon.Default({iconUrl:"dist/images/marker-green.png", iconRetinaUrl:"dist/images/marker-green-2x.png"})});
-		cityMarker.addTo(map);
+        info.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info leaflet-bar');
+            L.DomEvent.addListener(this._div, 'click', function (e) {
+                L.DomEvent.stopPropagation(e);
+            });
+            return this._div;
+        };
 
-		if(marker) {
-			var p1 = latLngToPtvMercator(latlng);
-			var p2 = latLngToPtvMercator(marker.getLatLng());
-			var c = ptvMercatorToLatLng(new L.Point((p1.x+p2.x) / 2, (p1.y+p2.y) / 2));
-		
-			// mercator distance
-			var mercDist = Math.sqrt((p2.x-p1.x)*(p2.x-p1.x) + (p2.y-p1.y)*(p2.y-p1.y));
-      
-			// real distance
-			var realDist = .001 * mercDist * Math.cos(latlng.lat * Math.PI / 180.0);
+        info.update = function () {
+            var headerText = "Find the City";
+            var resolveText = "Solve";
+            var nextText = "Next";
 
-			line = new L.Polyline([latlng, marker.getLatLng()]);
-			line.addTo(map);
+            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
+            html = html + '<div style="text-align: right">';
 
-			popup = L.popup()
-				.setLatLng(c)
-				.setContent('' + Math.round(realDist) + ' km');
+            if (resolved)
+                html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
+            else
+                html = html + '<input type="button" value="' + resolveText + '" onclick="resolve()">';
 
-			map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()]).pad(.5));
-				
-			popup.openOn(map);
+            html = html + '</div>';
 
-				}
-				
-		else {
-			map.setView(latlng, 3);
-		}
-		resolved = true;
-		updateUI();
-	}
-		
-	function updateUI() {
-		info.update();
-	}
-								
-	function getLocalizedFeatureName(feature) {
-			return feature.properties.city;
-	}
+            this._div.innerHTML = html;
+        };
+        info.addTo(map);
 
-	function updateMap() {		
-	}
-		
-	map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s World Quiz</a>');
-	map.attributionControl.addAttribution('<a href="http://en.wikipedia.org/wiki/List_of_cities_by_longitude">Wikipedia</a>');
+        updateMap();
 
-	</script>
+        nextCountry();
+
+        function get(name) {
+            if (name = (new RegExp('[?&]' + encodeURIComponent(name) + '=([^&]*)')).exec(location.search))
+                return decodeURIComponent(name[1]);
+        }
+
+        function setMarker(e) {
+            if (resolved)
+                return
+
+            if (marker)
+                marker.setLatLng(e.latlng);
+            else {
+                marker = L.marker(e.latlng, {
+                    draggable: true,
+                    clickable: false,
+                    opacity: .5
+                });
+                marker.on('drag', onDragging);
+                marker.addTo(map);
+            }
+        }
+
+        function onDragging(e) {
+            //map.invalidateSize()
+            marker.setLatLng(e.target.getLatLng());
+        }
+
+        function nextCountry() {
+            countryIdx = shuffleArray[cnt++ % shuffleArray.length];
+            if (marker) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+            if (cityMarker) {
+                map.removeLayer(cityMarker);
+                cityMarker = null;
+            }
+            if (line) {
+                map.removeLayer(line);
+                line = null;
+            }
+            if (popup) {
+                map.removeLayer(popup);
+                popup = null;
+            }
+            if (OpenStreetMap_Mapnik) {
+                map.removeLayer(OpenStreetMap_Mapnik);
+                OpenStreetMap_Mapnik = null;
+            }
+
+            map.fitWorld();
+
+            resolved = false;
+            updateUI();
+        }
+
+        function latLngToPtvMercator(latlng) {
+            return new L.Point(
+                6371000.0 * latlng.lng * Math.PI / 180,
+                6371000.0 * Math.log(Math.tan(Math.PI / 4 + latlng.lat * Math.PI / 360)));
+        }
+
+        function ptvMercatorToLatLng(point) {
+            return new L.LatLng(
+                (360 / Math.PI) * (Math.atan(Math.exp(point.y / 6371000.0)) - (Math.PI / 4)), (180.0 / Math.PI) * (point.x / 6371000.0));
+        }
+
+        function resolve() {
+            OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                noWrap: true,
+                opacity: .5,
+                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+            });
+            OpenStreetMap_Mapnik.addTo(map);
+
+            var lnglat = statesData.features[countryIdx].geometry.coordinates;
+            var latlng = new L.LatLng(lnglat[1], lnglat[0]);
+            cityMarker = L.marker(latlng, {
+                draggable: false,
+                clickable: false,
+                opacity: .5,
+                icon: new L.Icon.Default({
+                    iconUrl: "dist/images/marker-green.png",
+                    iconRetinaUrl: "dist/images/marker-green-2x.png"
+                })
+            });
+            cityMarker.addTo(map);
+
+            if (marker) {
+                var p1 = latLngToPtvMercator(latlng);
+                var p2 = latLngToPtvMercator(marker.getLatLng());
+                var c = ptvMercatorToLatLng(new L.Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2));
+
+                // mercator distance
+                var mercDist = Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+
+                // real distance
+                var realDist = .001 * mercDist * Math.cos(latlng.lat * Math.PI / 180.0);
+
+                line = new L.Polyline([latlng, marker.getLatLng()]);
+                line.addTo(map);
+
+                popup = L.popup()
+                    .setLatLng(c)
+                    .setContent('' + Math.round(realDist) + ' km');
+
+                map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()]).pad(.5));
+
+                popup.openOn(map);
+
+            } else {
+                map.setView(latlng, 3);
+            }
+            resolved = true;
+            updateUI();
+        }
+
+        function updateUI() {
+            info.update();
+        }
+
+        function getLocalizedFeatureName(feature) {
+            return feature.properties.city;
+        }
+
+        function updateMap() {}
+
+        map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s World Quiz</a>');
+        map.attributionControl.addAttribution('<a href="http://en.wikipedia.org/wiki/List_of_cities_by_longitude">Wikipedia</a>');
+    </script>
 </body>
+
 </html>
