@@ -34,50 +34,31 @@
 
 	<script src="./dist/leaflet.js"></script>
 	<script type="text/javascript" src="cities.js"></script>
-	<script type="text/javascript" src="rand.js"></script>
-<!--	<script type="text/javascript" src="cities_de.js"></script> -->
 	<script type="text/javascript">
 
 	var map = L.map('map');
 	var countryIdx;
 	var resolved = false;
-	
-	var marker = null;
-	var cityMarker = null;
-	var line = null;
-	var popup = null;
-	var OpenStreetMap_Mapnik = null;
-	var cnt = 0;
-	
-	var lang = "en";
-	
-	if(get("id"))
-		randomize(get("id"));
-	else
-		randomize(Date());		
-	
-	var shuffleArray = new Array();
-	for(var i = 0; i < statesData.features.length; i++) {
-		shuffleArray[i] = i;
-	}
-	shuffle(shuffleArray);
-	
-	map.on('click', setMarker);
+	var highlightedFeature;
+	var lang = (navigator.language) ? navigator.language : navigator.userLanguage; 	
+	if(lang)
+		lang=lang.substr(0,2).toLowerCase();
+	var geojson;		
+	var jsonToFeature;
+	var namesLookUp;		
 
+	var OpenStreetMap_Mapnik = null;		
 	var Esri_WorldShadedRelief = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
 		attribution: '&copy; <a href="http://www.esri.com/software/arcgis/arcgis-online-map-and-geoservices/map-services">Esri</a>',
-		noWrap: true, maxZoom: 13
+		maxZoom: 13
 	});
 	Esri_WorldShadedRelief.addTo(map);	
-	
+
 	// control that shows state info on hover
 	var info = L.control();
 
 	info.onAdd = function (map) {
-		this._div = L.DomUtil.create('div', 'info leaflet-bar');
-		L.DomEvent.addListener(this._div, 'click', function (e) {
-		L.DomEvent.stopPropagation(e);
-		});
+	this._div = L.DomUtil.create('div', 'info leaflet-bar');
 		return this._div;
 	};				
 
@@ -105,137 +86,162 @@
 		this._div.innerHTML = html;
 	};
 	info.addTo(map);
-						
+		
+	// control that toggles the language
+	var langSelect = L.control({position:"bottomleft"});
+
+	langSelect.onAdd = function (map) {
+		this._div = L.DomUtil.create('div', 'leaflet-bar');
+		return this._div;
+	};				
+
+	langSelect.update = function () {		
+		if(lang == "de")
+			this._div.innerHTML = '<input type="button" value="EN" onclick="toggleLanguage()">';
+		else
+			this._div.innerHTML = '<input type="button" value="DE" onclick="toggleLanguage()">';
+	};
+//	langSelect.addTo(map);
+		
+//	initLanguage();
+		
 	updateMap();	
 				
 	nextCountry();
-	
-function get(name){
-   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
-      return decodeURIComponent(name[1]);
-}
 
-	function setMarker(e) {
-		if(resolved)
-			return
 	
-		if(marker) 
-			marker.setLatLng(e.latlng);
- 		else {
-			marker = L.marker(e.latlng, {draggable: true, clickable:false, opacity: .5});
-			marker.on('drag', onDragging);
-			marker.addTo(map);
+	function initLanguage() {
+		if(lang == "de") {
+			namesLookUp = {};
+			for (var i = 0, len = names_de.length; i < len; i++) 
+				namesLookUp[names_de[i].id] = names_de[i];
 		}
+		else 
+			namesLookUp = undefined;
 	}
 	
-	function onDragging(e) {
-    //map.invalidateSize()
-    marker.setLatLng(e.target.getLatLng());
+	function checkResult(feature) {
+		if(feature.id == statesData.features[countryIdx].id)
+			resolve();
+		else {
+			highlightFeature(feature, 'marker-red');
+		}
 	}
-			
-	function nextCountry() {				
-		countryIdx = shuffleArray[cnt++ % shuffleArray.length];
-		if(marker) {
-			map.removeLayer(marker);
-			marker = null;
-		}
-		if(cityMarker) {
-			map.removeLayer(cityMarker);
-			cityMarker = null;
-		}
-		if(line) {
-			map.removeLayer(line);
-			line = null;
-		}
-		if(popup) {
-			map.removeLayer(popup);
-			popup = null;
-		}
+		
+	function nextCountry() {
 		if(OpenStreetMap_Mapnik) {
 			map.removeLayer(OpenStreetMap_Mapnik);
 			OpenStreetMap_Mapnik = null;
 		}
-		
+		if(highlightedFeature) {
+			map.removeLayer(highlightedFeature);
+			highlightedFeature = null;
+			}
+				
+		countryIdx = Math.floor(Math.random() * statesData.features.length);
 		map.fitWorld();
 
 		resolved = false;
 		updateUI();
 	}
-	
-	function latLngToPtvMercator(latlng)
-    {
-		return new L.Point(
-			6371000.0 * latlng.lng * Math.PI / 180,
-			6371000.0 * Math.log(Math.tan(Math.PI / 4 + latlng.lat * Math.PI / 360)));
-    }
-	
-	function ptvMercatorToLatLng(point)
-    {
-		return new L.LatLng(
-			(360 / Math.PI) * (Math.atan(Math.exp(point.y / 6371000.0)) - (Math.PI / 4)),
-			(180.0 / Math.PI) * (point.x / 6371000.0));
- 	}
 		
-	function resolve() {			
-		OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { noWrap: true, opacity: .5,
+	function resolve() {
+			OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 	opacity: .5,
 			attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
 		});
    	    OpenStreetMap_Mapnik.addTo(map);
 
-		var lnglat = statesData.features[countryIdx].geometry.coordinates;
-		var latlng = new L.LatLng(lnglat[1], lnglat[0]);
-		cityMarker = L.marker(latlng, {draggable: false, clickable:false, opacity: .5,
-					 icon:new L.Icon.Default({iconUrl:"dist/images/marker-green.png", iconRetinaUrl:"dist/images/marker-green-2x.png"})});
-		cityMarker.addTo(map);
-
-		if(marker) {
-			var p1 = latLngToPtvMercator(latlng);
-			var p2 = latLngToPtvMercator(marker.getLatLng());
-			var c = ptvMercatorToLatLng(new L.Point((p1.x+p2.x) / 2, (p1.y+p2.y) / 2));
+		highlightFeature(statesData.features[countryIdx], 'marker-green');
 		
-			// mercator distance
-			var mercDist = Math.sqrt((p2.x-p1.x)*(p2.x-p1.x) + (p2.y-p1.y)*(p2.y-p1.y));
-      
-			// real distance
-			var realDist = .001 * mercDist * Math.cos(latlng.lat * Math.PI / 180.0);
+		map.setView([statesData.features[countryIdx].geometry.coordinates[1],
+		statesData.features[countryIdx].geometry.coordinates[0]], 8);
 
-			line = new L.Polyline([latlng, marker.getLatLng()]);
-			line.addTo(map);
-
-			popup = L.popup()
-				.setLatLng(c)
-				.setContent('' + Math.round(realDist) + ' km');
-
-			map.fitBounds(new L.LatLngBounds([latlng, marker.getLatLng()]).pad(.5));
-				
-			popup.openOn(map);
-
-				}
-				
-		else {
-			map.setView(latlng, 3);
-		}
 		resolved = true;
 		updateUI();
 	}
 		
 	function updateUI() {
 		info.update();
+		langSelect.update();
 	}
-				
+		
+	function toggleLanguage() {
+		if(lang == "de")
+			lang = "en";
+		else 
+			lang = "de";
+			
+//		initLanguage();	
+		updateMapLanguage();	
+		updateUI();
+	}
+		
 	function updateMapLanguage() {
+	return;
+		for (var i = 0, len = statesData.features.length; i < len; i++) {
+			var layer = jsonToFeature[statesData.features[i].id];
+			layer.bindPopup(getLocalizedFeatureName(statesData.features[i]));
+		}
 	}
-				
+		
+	function style(feature) {
+		return {
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+			dashArray: '3',
+			fillOpacity: 1.0,
+			fillColor: '#00f'
+		};
+	}
+		
+	function highlightFeature(feature, c) {
+		if(highlightedFeature)
+			map.removeLayer(highlightedFeature);
+			
+		highlightedFeature = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 
+		{zIndexOffset: 1000, icon:new L.Icon.Default(
+		{iconUrl:"dist/images/" + c + ".png", iconRetinaUrl:"dist/images/" + c + "-2x.png"})}).addTo(map)
+		.bindPopup(getLocalizedFeatureName(feature))
+		.openPopup();	
+	}
+
+	function zoomToFeature(e) {
+		var layer = e.target;
+		checkResult(layer.feature);
+	}
+
+	function onEachFeature(feature, layer) {
+		jsonToFeature[feature.id] = layer;
+
+		layer.on({
+			click: zoomToFeature
+		});
+	}		
+		
 	function getLocalizedFeatureName(feature) {
-			return feature.properties.city;
+		if(namesLookUp && namesLookUp[feature.id])
+			return namesLookUp[feature.id].name;
+		else
+			return feature.id;
 	}
 
 	function updateMap() {		
+		jsonToFeature = {};
+			
+		if(geojson)
+			map.removeLayer(geojson);
+				
+		geojson = L.geoJson(statesData, {
+			style: style,
+			onEachFeature: onEachFeature
+		}).addTo(map);
+
 		updateMapLanguage();
 	}
 		
 	map.attributionControl.addAttribution('<a href="https://github.com/oliverheilig/LindasWorldQuiz">Linda&#8216;s World Quiz</a>');
-	map.attributionControl.addAttribution('<a href="https://github.com/mahemoff/geodata">mahemoff/geodata</a>');
+	map.attributionControl.addAttribution('<a href="https://github.com/johan/world.geo.json">world.geo.json</a>');
 
 	</script>
 </body>

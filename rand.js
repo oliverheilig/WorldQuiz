@@ -71,7 +71,7 @@ function randomize(seed) {
     
     /* Usage */
     var a = Array(1009), i = 0;
-    ranf_start(getHashCode(seed));
+    ranf_start(getHashCode(seed.toLowerCase()));
     ranf_array(a,1009);
     window.random = function () {
         1009 === i && (seed = a[i-1], i = 0, ranf_start(seed), ranf_array(a, 1009));
