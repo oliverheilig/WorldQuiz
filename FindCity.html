@@ -133,11 +133,11 @@
             });
             OpenStreetMap_Mapnik.addTo(map);
 
-            highlightFeature(statesData.features[countryIdx], 'marker-green');
-
             map.setView([statesData.features[countryIdx].geometry.coordinates[1],
                 statesData.features[countryIdx].geometry.coordinates[0]
             ], 8);
+
+            highlightFeature(statesData.features[countryIdx], 'marker-green');
 
             resolved = true;
             updateUI();
