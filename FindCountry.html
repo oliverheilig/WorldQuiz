@@ -157,8 +157,8 @@
         function resolve() {
             var feature = jsonToFeature[statesData.features[countryIdx].id];
 
-            map.fitBounds(feature.getBounds().pad(.5));
             highlightFeature(feature, '#afa');
+            map.fitBounds(feature.getBounds().pad(.5));
 
             resolved = true;
             updateUI();

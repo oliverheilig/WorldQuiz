@@ -105,7 +105,7 @@
             if (feature.id == statesData.features[countryIdx].id)
                 resolve();
             else {
-                highlightFeature(feature, 'marker-red');
+                highlightFeature(feature, 'marker-red', true);
             }
         }
 
@@ -133,11 +133,11 @@
             });
             OpenStreetMap_Mapnik.addTo(map);
 
+            highlightFeature(statesData.features[countryIdx], 'marker-green', false);
+
             map.setView([statesData.features[countryIdx].geometry.coordinates[1],
                 statesData.features[countryIdx].geometry.coordinates[0]
             ], 8);
-
-            highlightFeature(statesData.features[countryIdx], 'marker-green');
 
             resolved = true;
             updateUI();
@@ -147,7 +147,7 @@
             info.update();
         }
 
-        function highlightFeature(feature, c) {
+        function highlightFeature(feature, c, showPopUp) {
             if (highlightedFeature)
                 map.removeLayer(highlightedFeature);
 
@@ -157,9 +157,12 @@
                     iconUrl: "dist/images/" + c + ".png",
                     iconRetinaUrl: "dist/images/" + c + "-2x.png"
                 })
-            }).addTo(map)
-                .bindPopup(getLocalizedFeatureName(feature))
-                .openPopup();
+            }).addTo(map);
+			
+			if(showPopUp) {
+                highlightedFeature.bindPopup(getLocalizedFeatureName(feature));
+                highlightedFeature.openPopup();
+			}
         }
 
         function zoomToFeature(e) {
