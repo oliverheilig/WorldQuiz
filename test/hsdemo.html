@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8 />
+    <title>Dynamic Hill Shading</title>
+
+    <link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
+    <script src="https://api.tiles.mapbox.com/mapbox.js/v1.4.0/mapbox.js"></script>
+    <link href="https://api.tiles.mapbox.com/mapbox.js/v1.4.0/mapbox.css" rel="stylesheet" />
+    <style>
+        body {
+            margin:0;
+            padding:0;
+        }
+        html, body, #map {
+            height: 100%;
+        }
+        #controls {
+            position: absolute;
+            top: 0px;
+            right: 0;
+            width: 400px;
+            z-index:999;
+        }
+        #controls label {
+            float: left;
+            clear: right;
+        }
+        #controls input {
+            width: 270px;
+            float: right;
+            margin-top:5px;;
+        }
+        .pad0 {
+            padding:2px 10px;
+        }
+        .alert {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="controls" class="fill-light">
+    <div class='pad1 fill-grey'>
+        <p class='icon sprocket'>Dynamic Hillshade</p>
+    </div>
+    <fieldset class='pad1'>
+        <div class='clearfix pad0'><label>Azimuth  </label><input type="range" id="azimuth"    min="-120" max="120" value="0" /></div>
+        <div class='clearfix pad0'><label>Altitude </label><input type="range" id="altitude"   min="0"    max="90"  value="60" /></div>
+        <div class='clearfix pad0'><label>Depth    </label><input type="range" id="zfactor"    min="0.02" max="0.4" value="0.12" step="0.01" /></div>
+        <div class='clearfix pad0'><label>Shadow   </label><input type="range" id="shadows"    min="0"    max="1.0" value="0.45"  step="0.01" /></div>
+        <div class='clearfix pad0'><label>Highlight</label><input type="range" id="highlights" min="0"    max="1.0" value="0.45"  step="0.01" /></div>
+    </fieldset>
+</div>
+
+<script src="hillshade.js"></script>
+<script src="index.js"></script>
+</body>
+</html>
