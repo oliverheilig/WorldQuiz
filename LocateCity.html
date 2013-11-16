@@ -6,10 +6,7 @@
     <meta charset="utf-8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
     <link rel="stylesheet" href="./dist/leaflet.css" />
-    <!--[if lte IE 8]><link rel="stylesheet" href="./dist/leaflet.ie.css" /><![endif]-->
-
     <style>
         body {
             padding: 0;
@@ -36,6 +33,7 @@
 
     <script src="./dist/leaflet.js"></script>
     <script type="text/javascript" src="cities.js"></script>
+    <script type="text/javascript" src="countries.js"></script>
     <script type="text/javascript" src="rand.js"></script>
     <script type="text/javascript">
         var map = L.map('map');
@@ -55,7 +53,7 @@
             randomize(Date());
 
         var shuffleArray = new Array();
-        for (var i = 0; i < statesData.features.length; i++) {
+        for (var i = 0; i < citiesData.features.length; i++) {
             shuffleArray[i] = i;
         }
         shuffle(shuffleArray);
@@ -68,6 +66,13 @@
             maxZoom: 13
         });
         Esri_WorldShadedRelief.addTo(map);
+        L.geoJson(statesData, {
+            style: {
+                fill: false,
+                opacity: 1,
+                color: '#aaa'
+            }
+        }).addTo(map);
 
          // control that shows state info on hover
         var info = L.control();
@@ -85,7 +90,7 @@
             var resolveText = "Solve";
             var nextText = "Next";
 
-            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
+            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(citiesData.features[countryIdx]) + '</h4></div>';
             html = html + '<div style="text-align: right">';
 
             if (resolved)
@@ -178,7 +183,7 @@
             });
             OpenStreetMap_Mapnik.addTo(map);
 
-            var lnglat = statesData.features[countryIdx].geometry.coordinates;
+            var lnglat = citiesData.features[countryIdx].geometry.coordinates;
             var latlng = new L.LatLng(lnglat[1], lnglat[0]);
             cityMarker = L.marker(latlng, {
                 draggable: false,

@@ -6,10 +6,7 @@
     <meta charset="utf-8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
     <link rel="stylesheet" href="./dist/leaflet.css" />
-    <!--[if lte IE 8]><link rel="stylesheet" href="./dist/leaflet.ie.css" /><![endif]-->
-
     <style>
         body {
             padding: 0;
@@ -41,7 +38,6 @@
     <script type="text/javascript">
         var map = L.map('map');
         var countryIdx;
-        var resolved = false;
         var highlightedFeature;
         var lang = (navigator.language) ? navigator.language : navigator.userLanguage;
         if (lang)
@@ -70,10 +66,11 @@
             return this._div;
         };
 
-        info.update = function () {
+        info.update = function (resolved, correct) {
             var headerText = "Find the country";
             var resolveText = "Solve";
             var nextText = "Next";
+			var color = resolved? (correct? ";background-color:#8f8" : ";background-color:#f88") : "";
 
             if (lang == "de") {
                 headerText = "Finde das Land";
@@ -81,13 +78,14 @@
                 nextText = "Weiter";
             }
 
-            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
+            var html = '' + headerText + '<div style="text-align: center' + color + 
+			'"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
             html = html + '<div style="text-align: right">';
 
             if (resolved)
                 html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
             else
-                html = html + '<input type="button" value="' + resolveText + '" onclick="resolve()">';
+                html = html + '<input type="button" value="' + resolveText + '" onclick="resolve(false)">';
 
             html = html + '</div>';
 
@@ -136,7 +134,7 @@
 
         function checkResult(id) {
             if (id == statesData.features[countryIdx].id)
-                resolve();
+                resolve(true);
             else {
                 var feature = jsonToFeature[id];
                 highlightFeature(feature, '#faa');
@@ -150,22 +148,20 @@
             countryIdx = shuffleArray[cnt++ % shuffleArray.length];
             map.fitWorld();
 
-            resolved = false;
-            updateUI();
+            updateUI(false, false);
         }
 
-        function resolve() {
+        function resolve(correct) {
             var feature = jsonToFeature[statesData.features[countryIdx].id];
 
             highlightFeature(feature, '#afa');
             map.fitBounds(feature.getBounds().pad(.5));
 
-            resolved = true;
-            updateUI();
-        }
+            updateUI(true, correct);
+		}
 
-        function updateUI() {
-            info.update();
+        function updateUI(resolved, correct) {
+            info.update(resolved, correct);
             langSelect.update();
         }
 

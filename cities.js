@@ -1,4 +1,4 @@
-﻿var statesData = {
+﻿var citiesData = {
 "type": "FeatureCollection",
 "features": [{
 "geometry": {

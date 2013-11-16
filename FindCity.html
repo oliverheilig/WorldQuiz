@@ -6,10 +6,7 @@
     <meta charset="utf-8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
     <link rel="stylesheet" href="./dist/leaflet.css" />
-    <!--[if lte IE 8]><link rel="stylesheet" href="./dist/leaflet.ie.css" /><![endif]-->
-
     <style>
         body {
             padding: 0;
@@ -37,10 +34,10 @@
     <script src="./dist/leaflet.js"></script>
     <script type="text/javascript" src="rand.js"></script>
     <script type="text/javascript" src="cities.js"></script>
+    <script type="text/javascript" src="countries.js"></script>
     <script type="text/javascript">
         var map = L.map('map');
         var countryIdx;
-        var resolved = false;
         var highlightedFeature;
         var geojson;
         var jsonToFeature;
@@ -53,7 +50,7 @@
             randomize(Date());
 
         var shuffleArray = new Array();
-        for (var i = 0; i < statesData.features.length; i++) {
+        for (var i = 0; i < citiesData.features.length; i++) {
             shuffleArray[i] = i;
         }
         shuffle(shuffleArray);
@@ -64,6 +61,13 @@
             maxZoom: 13
         });
         Esri_WorldShadedRelief.addTo(map);
+        L.geoJson(statesData, {
+            style: {
+                fill: false,
+                opacity: 1,
+                color: '#aaa'
+            }
+        }).addTo(map);
 
          // control that shows state info on hover
         var info = L.control();
@@ -73,18 +77,20 @@
             return this._div;
         };
 
-        info.update = function () {
+        info.update = function (resolved, correct) {
             var headerText = "Find the City";
             var resolveText = "Solve";
             var nextText = "Next";
+			var color = resolved? (correct? ";background-color:#8f8" : ";background-color:#f88") : "";
 
-            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
-            html = html + '<div style="text-align: right">';
+            var html = headerText + '<div style="text-align: center' + color + 
+			'"><h4>' + getLocalizedFeatureName(citiesData.features[countryIdx]) + '</h4></div>' +
+            '<div style="text-align: right">';
 
             if (resolved)
                 html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
             else
-                html = html + '<input type="button" value="' + resolveText + '" onclick="resolve()">';
+                html = html + '<input type="button" value="' + resolveText + '" onclick="resolve(false)">';
 
             html = html + '</div>';
 
@@ -102,8 +108,8 @@
         }
 
         function checkResult(feature) {
-            if (feature.id == statesData.features[countryIdx].id)
-                resolve();
+            if (feature.id == citiesData.features[countryIdx].id)
+                resolve(true);
             else {
                 highlightFeature(feature, 'marker-red', true);
             }
@@ -122,29 +128,27 @@
             countryIdx = shuffleArray[cnt++ % shuffleArray.length];
             map.fitWorld();
 
-            resolved = false;
-            updateUI();
+            updateUI(false, false);
         }
 
-        function resolve() {
+        function resolve(correct) {
             OpenStreetMap_Mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 opacity: .5,
                 attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
             });
             OpenStreetMap_Mapnik.addTo(map);
 
-            highlightFeature(statesData.features[countryIdx], 'marker-green', false);
+            highlightFeature(citiesData.features[countryIdx], 'marker-green', false);
 
-            map.setView([statesData.features[countryIdx].geometry.coordinates[1],
-                statesData.features[countryIdx].geometry.coordinates[0]
+            map.setView([citiesData.features[countryIdx].geometry.coordinates[1],
+                citiesData.features[countryIdx].geometry.coordinates[0]
             ], 8);
 
-            resolved = true;
-            updateUI();
+            updateUI(true, correct);
         }
 
-        function updateUI() {
-            info.update();
+        function updateUI(resolved, correct) {
+            info.update(resolved, correct);
         }
 
         function highlightFeature(feature, c, showPopUp) {
@@ -206,7 +210,7 @@
             if (geojson)
                 map.removeLayer(geojson);
 
-            geojson = L.geoJson(statesData, {
+            geojson = L.geoJson(citiesData, {
                 pointToLayer: style,
                 onEachFeature: onEachFeature
             }).addTo(map);

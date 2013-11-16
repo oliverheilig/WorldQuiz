@@ -6,10 +6,7 @@
     <meta charset="utf-8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
     <link rel="stylesheet" href="./dist/leaflet.css" />
-    <!--[if lte IE 8]><link rel="stylesheet" href="./dist/leaflet.ie.css" /><![endif]-->
-
     <style>
         body {
             padding: 0;
@@ -56,7 +53,7 @@
             randomize(Date());
 
         var shuffleArray = new Array();
-        for (var i = 0; i < statesData.features.length; i++) {
+        for (var i = 0; i < citiesData.features.length; i++) {
             shuffleArray[i] = i;
         }
         shuffle(shuffleArray);
@@ -92,7 +89,7 @@
             var resolveText = "Aufl&ouml;sen";
             var nextText = "Weiter";
 
-            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
+            var html = '' + headerText + '<div style="text-align: center"><h4>' + getLocalizedFeatureName(citiesData.features[countryIdx]) + '</h4></div>';
             html = html + '<div style="text-align: right">';
 
             if (resolved)
@@ -185,7 +182,7 @@
             });
             OpenStreetMap_Mapnik.addTo(map);
 
-            var lnglat = statesData.features[countryIdx].geometry.coordinates;
+            var lnglat = citiesData.features[countryIdx].geometry.coordinates;
             var latlng = new L.LatLng(lnglat[1], lnglat[0]);
             cityMarker = L.marker(latlng, {
                 draggable: false,
