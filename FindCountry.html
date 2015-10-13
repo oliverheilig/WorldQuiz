@@ -46,6 +46,7 @@
         var jsonToFeature;
         var namesLookUp;
         var cnt = 0;
+		var state = "open";
 
         if (get("id"))
             randomize(get("id"));
@@ -66,11 +67,11 @@
             return this._div;
         };
 
-        info.update = function (resolved, correct) {
+        info.update = function () {
             var headerText = "Find the country";
             var resolveText = "Solve";
             var nextText = "Next";
-			var color = resolved? (correct? ";background-color:#8f8" : ";background-color:#f88") : "";
+			var color = (state==="correct")? ";background-color:#8f8" : (state==="wrong")? ";background-color:#f88" : "";
 
             if (lang == "de") {
                 headerText = "Finde das Land";
@@ -82,10 +83,10 @@
 			'"><h4>' + getLocalizedFeatureName(statesData.features[countryIdx]) + '</h4></div>';
             html = html + '<div style="text-align: right">';
 
-            if (resolved)
-                html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
-            else
+            if (state === "open")
                 html = html + '<input type="button" value="' + resolveText + '" onclick="resolve(false)">';
+            else
+                html = html + '<input type="button" value="' + nextText + '" onclick="nextCountry()">';
 
             html = html + '</div>';
 
@@ -133,11 +134,13 @@
         }
 
         function checkResult(id) {
-            if (id == statesData.features[countryIdx].id)
+			var correct = (id === statesData.features[countryIdx].id);
+		
+            if ((state==="open") && correct)
                 resolve(true);
             else {
                 var feature = jsonToFeature[id];
-                highlightFeature(feature, '#faa');
+                highlightFeature(feature, correct? '#afa' : "#faa");
             }
         }
 
@@ -148,21 +151,23 @@
             countryIdx = shuffleArray[cnt++ % shuffleArray.length];
             map.fitWorld();
 
-            updateUI(false, false);
+			state = "open";
+            updateUI();
         }
 
         function resolve(correct) {
+			state = correct? "correct" : "wrong";
             var feature = jsonToFeature[statesData.features[countryIdx].id];
 
             highlightFeature(feature, '#afa');
             map.fitBounds(feature.getBounds().pad(.5));
 
-            updateUI(true, correct);
+            updateUI();
 		}
 
-        function updateUI(resolved, correct) {
-            info.update(resolved, correct);
+        function updateUI() {
             langSelect.update();
+            info.update();
         }
 
         function toggleLanguage() {
