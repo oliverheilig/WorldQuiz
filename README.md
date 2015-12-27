@@ -1,6 +1,6 @@
-Linda's World Quiz
-==================
+World Quiz
+==========
 
 A minimalistic geo quiz utilizing Leaflet
 
-Play on http://oliverheilig.github.io/LindasWorldQuiz
+Play on http://oliverheilig.github.io/WorldQuiz
