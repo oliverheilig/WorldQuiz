@@ -39,9 +39,6 @@
         var map = L.map('map');
         var countryIdx;
         var highlightedFeature;
-        var lang = (navigator.language) ? navigator.language : navigator.userLanguage;
-        if (lang)
-            lang = lang.substr(0, 2).toLowerCase();
         var geojson;
         var jsonToFeature;
         var namesLookUp;
@@ -112,6 +109,11 @@
         };
         langSelect.addTo(map);
 
+        // var lang = (navigator.language) ? navigator.language : navigator.userLanguage;
+        // if (lang)
+        //     lang = lang.substr(0, 2).toLowerCase();
+            
+        var lang = getQueryParams(window.location.search)["lang"];
 
         initLanguage();
 
@@ -124,7 +126,21 @@
                 return decodeURIComponent(name[1]);
         }
 
-        function initLanguage(id) {
+        function getQueryParams(qs) {
+            qs = qs.split('+').join(' ');
+
+            var params = {},
+            tokens,
+            re = /[?&]?([^=]+)=([^&]*)/g;
+
+            while (tokens = re.exec(qs)) {
+                params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+            }
+
+            return params;
+        }
+
+        function initLanguage() {
             if (lang == "de") {
                 namesLookUp = {};
                 for (var i = 0, len = names_de.length; i < len; i++)
