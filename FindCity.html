@@ -158,8 +158,9 @@
             highlightedFeature = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], {
                 zIndexOffset: 1000,
                 icon: new L.Icon.Default({
-                    iconUrl: "dist/images/" + c + ".png",
-                    iconRetinaUrl: "dist/images/" + c + "-2x.png"
+                    imagePath: './dist/images/',
+                    iconUrl: c + ".png",
+                    iconRetinaUrl: c + "-2x.png"
                 })
             }).addTo(map);
 			
